@@ -1,35 +1,11 @@
-pipeline {
-    agent any
-    tools {
-        // Ensure these names match your "Global Tool Configuration" names
-        maven 'Maven' 
-        jdk 'JDK17' 
+node {
+  stage('SCM') {
+    checkout scm
+  }
+  stage('SonarQube Analysis') {
+    def mvn = tool 'Default Maven';
+    withSonarQubeEnv() {
+      sh "${mvn}/bin/mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Group-Onee_Test1_0035ba2e-ab86-4a9c-aa9d-ec0115229620 -Dsonar.projectName='Test1'"
     }
-    stages {
-        stage('Build') {
-            steps {
-                sh 'mvn clean package -DskipTests'
-            }
-        }
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-        stage('SonarQube Analysis') {
-            steps {
-                // 'SonarQube-Local' must match the name in Jenkins > System
-                withSonarQubeEnv('SonarQube-Local') {
-                    sh 'mvn sonar:sonar'
-                }
-            }
-        }
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-    }
+  }
 }
